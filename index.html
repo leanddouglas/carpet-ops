@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description"
+        content="Carpet & Tile Ops Canada — Professional business management: invoicing, accounting, GST/HST reports, equipment tracking. Offline PWA.">
+    <meta name="theme-color" content="#1d4ed8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CTO Canada">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="icon" href="assets/icon-192.png">
+    <title>Carpet &amp; Tile Ops — Canada</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Print area (hidden, shown in @media print) -->
+    <div id="print-invoice-area"></div>
+
+    <!-- PWA Install Banner -->
+    <div class="install-banner" id="install-banner">
+        <div>📲 Install for offline access</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button class="install-btn" id="install-btn">Install</button>
+            <button class="install-dismiss" id="install-dismiss">✕</button>
+        </div>
+    </div>
+
+    <div id="app">
+
+        <!-- ══════════ HEADER ══════════ -->
+        <header class="app-header">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Douglas Da Silva Carpet Cleaning Logo">
+                <div>
+                    <div class="logo-text" id="header-business-name">DOUGLAS DA SILVA</div>
+                    <div class="logo-sub" id="header-business-sub">CARPET CLEANING · AI OPS</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="user-switcher" id="user-switcher"></div>
+                <button class="header-btn" onclick="SalesModule.openNew('invoice')" title="New Invoice"><span
+                        class="hbtn-icon" id="hbtn-invoice"></span></button>
+                <button class="header-btn" onclick="Accounting.openAddIncome()" title="Add Income"><span
+                        class="hbtn-icon"></span></button>
+                <button class="header-btn" onclick="Accounting.openAddExpense()" title="Add Expense"><span
+                        class="hbtn-icon"></span></button>
+            </div>
+        </header>
+
+        <!-- ══════════ SCREEN 1: DASHBOARD ══════════ -->
+        <section id="dashboard-screen" class="screen">
+            <!-- Month Nav -->
+            <div class="month-nav">
+                <button class="month-nav-btn" onclick="Dashboard.navigate(-1)">‹</button>
+                <span class="month-nav-label" id="dash-month-label">Loading…</span>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="month-nav-today" id="dash-to-current" onclick="Dashboard.backToCurrentMonth()"
+                        style="display:none;">Today</button>
+                    <button class="month-nav-btn" onclick="Dashboard.navigate(1)">›</button>
+                </div>
+            </div>
+            <!-- Hero -->
+            <div class="hero-banner">
+                <div class="hero-greeting" id="hero-greeting">Loading…</div>
+                <div class="hero-amount" id="hero-amount">$0.00</div>
+                <div class="hero-amount-label">Net-to-Keep (after splits &amp; GST)</div>
+                <div class="hero-date" id="hero-date"></div>
+            </div>
+            <!-- Outstanding invoices banner -->
+            <div
+                style="display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:12px 16px;box-shadow:var(--shadow-sm);">
+                <div style="flex:1;padding:12px 14px;border-right:1px solid var(--border);text-align:center;cursor:pointer;"
+                    onclick="App.navigate('sales')">
+                    <div style="font-family:var(--font-hud);font-size:16px;font-weight:700;color:var(--text);text-shadow:0 0 10px rgba(0,212,255,.2);"
+                        id="metric-outstanding">—</div>
+                    <div
+                        style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:2px;letter-spacing:.5px;">
+                        Outstanding</div>
+                </div>
+                <div style="flex:1;padding:12px 14px;text-align:center;cursor:pointer;" onclick="App.navigate('sales')">
+                    <div style="font-family:var(--font-hud);font-size:16px;font-weight:700;color:var(--red);"
+                        id="metric-overdue">
+                        —</div>
+                    <div
+                        style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:2px;letter-spacing:.5px;">
+                        Overdue</div>
+                </div>
+            </div>
+            <!-- Metric grid -->
+            <div class="metric-grid">
+                <div class="metric-card green">
+                    <div class="metric-icon">📥</div>
+                    <div class="metric-label">Gross Revenue</div>
+                    <div class="metric-value" id="metric-income">—</div>
+                    <div class="metric-sub">Before splits</div>
+                </div>
+                <div class="metric-card teal">
+                    <div class="metric-icon">✂️</div>
+                    <div class="metric-label">Owner Net</div>
+                    <div class="metric-value" id="metric-owner-net">—</div>
+                    <div class="metric-sub">After service splits</div>
+                </div>
+                <div class="metric-card red">
+                    <div class="metric-icon">📤</div>
+                    <div class="metric-label">Expenses</div>
+                    <div class="metric-value" id="metric-expenses">—</div>
+                    <div class="metric-sub">Business costs</div>
+                </div>
+                <div class="metric-card amber">
+                    <div class="metric-icon">🏛️</div>
+                    <div class="metric-label">GST/HST Owing</div>
+                    <div class="metric-value" id="metric-gst">—</div>
+                    <div class="metric-sub">Collected − ITC</div>
+                </div>
+                <div class="metric-card green">
+                    <div class="metric-icon">♻️</div>
+                    <div class="metric-label">ITC Credits</div>
+                    <div class="metric-value" id="metric-itc">—</div>
+                    <div class="metric-sub">From expenses</div>
+                </div>
+                <div class="metric-card blue">
+                    <div class="metric-icon">⏱️</div>
+                    <div class="metric-label">Hours Worked</div>
+                    <div class="metric-value" id="metric-hours">—</div>
+                    <div class="metric-sub">This month</div>
+                </div>
+            </div>
+            <!-- Revenue Chart -->
+            <div class="card">
+                <div class="card-header"><span class="card-title">6-Month Revenue</span><span
+                        class="card-badge">CAD</span>
+                </div>
+                <div class="chart-wrap">
+                    <div class="chart-bars" id="revenue-chart"></div>
+                </div>
+            </div>
+            <!-- Service breakdown -->
+            <div class="card">
+                <div class="card-header"><span class="card-title">Revenue by Service</span><button
+                        class="btn btn-sm btn-secondary" onclick="App.navigate('reports')">Full Report</button></div>
+                <div id="service-breakdown"></div>
+            </div>
+            <!-- Revenue goal -->
+            <div class="card" style="padding:14px 16px;">
+                <div class="card-header" style="padding:0 0 10px;"><span class="card-title">Monthly Revenue Goal</span>
+                </div>
+                <div class="progress-label-row"><span class="progress-label" id="progress-revenue-label">Loading…</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-revenue" style="width:0%"></div>
+                </div>
+            </div>
+            <!-- Net-to-Keep -->
+            <div class="card">
+                <div class="card-header"><span class="card-title">Net-to-Keep Formula</span><button
+                        class="btn btn-sm btn-secondary" onclick="App.navigate('settings')">⚙ Splits</button></div>
+                <div class="nk-formula">
+                    <div class="nk-block">
+                        <div class="nk-block-val" id="nk-gross">$0</div>
+                        <div class="nk-block-label">Gross</div>
+                    </div>
+                    <span class="nk-op">→</span>
+                    <div class="nk-block">
+                        <div class="nk-block-val" id="nk-owner">$0</div>
+                        <div class="nk-block-label">Owner Net</div>
+                    </div>
+                    <span class="nk-op">−</span>
+                    <div class="nk-block">
+                        <div class="nk-block-val" id="nk-gst">$0</div>
+                        <div class="nk-block-label">GST</div>
+                    </div>
+                    <span class="nk-op">+</span>
+                    <div class="nk-block" style="background:var(--green-50);">
+                        <div class="nk-block-val" style="color:var(--green-600);" id="nk-itc">$0</div>
+                        <div class="nk-block-label" style="color:var(--green-600);">ITC</div>
+                    </div>
+                    <span class="nk-op">=</span>
+                    <div class="nk-block nk-result">
+                        <div class="nk-block-val" id="nk-result">$0</div>
+                        <div class="nk-block-label">Keep</div>
+                    </div>
+                </div>
+            </div>
+            <!-- GST Calendar -->
+            <div class="card" style="padding:14px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;">
+                            GST/HST Filing
+                        </div>
+                        <div style="font-size:14px;font-weight:700;margin-top:4px;" id="gst-date">—</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">ITC: <span
+                                id="gst-itc-display">$0.00</span></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:var(--gray-400);" id="gst-days">— days</div>
+                        <div style="font-size:22px;font-weight:800;color:var(--amber-500);" id="gst-amount">$0.00</div>
+                        <div style="font-size:10px;color:var(--text-muted);">Net owing</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Alerts -->
+            <div class="section-pad">
+                <div class="section-title" style="font-size:14px;">Smart Alerts</div>
+            </div>
+            <div class="alert-list" id="alerts-container"></div>
+            <!-- Quick Actions -->
+            <div class="section-pad">
+                <div class="section-title" style="font-size:14px;">Quick Actions</div>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn invoice" onclick="SalesModule.openNew('invoice')"><span
+                        class="btn-icon qi-icon" id="qi-invoice"></span>New Invoice</button>
+                <button class="quick-btn income" onclick="Accounting.openAddIncome()"><span class="btn-icon qi-icon"
+                        id="qi-income"></span>Add Income</button>
+                <button class="quick-btn expense" onclick="Accounting.openAddExpense()"><span class="btn-icon qi-icon"
+                        id="qi-expense"></span>Add Expense</button>
+                <button class="quick-btn hours" onclick="App.navigate('ledger')"><span class="btn-icon qi-icon"
+                        id="qi-hours"></span>Log Hours</button>
+            </div>
+            <!-- Recent -->
+            <div class="section-pad">
+                <div class="section-title" style="font-size:14px;">Recent Transactions</div>
+            </div>
+            <div id="recent-txns"
+                style="background:var(--surface);margin:0 16px 16px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;">
+            </div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 1.5: PERSONAL DASHBOARD ══════════ -->
+        <section id="personal-screen" class="screen">
+            <!-- Hero -->
+            <div class="hero-banner"
+                style="background:linear-gradient(135deg,#120b22,#1b1031,#281545);border-bottom:1px solid rgba(192,122,255,.2);">
+                <div class="hero-greeting" id="personal-hero-name" style="color:var(--purple);">Selma's Dashboard</div>
+                <div class="hero-amount" id="personal-hero-amount"
+                    style="color:var(--purple);text-shadow:0 0 20px rgba(192,122,255,.4);">$0.00</div>
+                <div class="hero-amount-label">Net Monthly (Income - Expenses)</div>
+                <div style="display:flex;gap:15px;margin-top:12px;">
+                    <div>
+                        <div style="font-family:var(--font-hud);font-size:12px;color:var(--green);"
+                            id="personal-hero-income">$0.00
+                        </div>
+                        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Income</div>
+                    </div>
+                    <div>
+                        <div style="font-family:var(--font-hud);font-size:12px;color:var(--red);"
+                            id="personal-hero-expense">$0.00
+                        </div>
+                        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Expense</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Ring -->
+            <div class="card" style="margin-top:12px;">
+                <div class="card-header">
+                    <span class="card-title" style="color:var(--purple);">Monthly Budget Progress</span>
+                    <div style="font-family:var(--font-hud);font-size:11px;color:var(--text2);"
+                        id="personal-hero-budget">$4,000
+                    </div>
+                </div>
+                <div class="progress-label-row" style="padding:10px 16px 0;"><span class="progress-label"
+                        id="personal-budget-pct">0% used</span></div>
+                <div class="progress-track" style="margin:4px 16px 0;">
+                    <div class="progress-fill" id="personal-budget-fill" style="width:0%"></div>
+                </div>
+                <div class="ring-chart-wrap">
+                    <div class="ring-svg" id="personal-donut" style="position:relative;"></div>
+                    <div class="ring-center" id="personal-donut-center"></div>
+                    <div class="ring-legend" id="personal-donut-legend"></div>
+                </div>
+            </div>
+
+            <!-- Savings Ring -->
+            <div class="card">
+                <div class="card-header"><span class="card-title" style="color:var(--purple);">Savings Goals</span>
+                </div>
+                <div class="ring-chart-wrap" style="align-items:flex-start;">
+                    <div class="ring-svg" id="savings-ring" style="position:relative;"></div>
+                    <div class="ring-center" id="savings-ring-center"></div>
+                    <div style="flex:1;">
+                        <div style="margin-bottom:8px;">
+                            <div
+                                style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">
+                                Total Saved
+                            </div>
+                            <div style="font-family:var(--font-hud);font-size:14px;font-weight:700;color:var(--cyan);"
+                                id="savings-saved">$0.00</div>
+                            <div style="font-size:10px;color:var(--text2);">of <span id="savings-target"></span></div>
+                        </div>
+                        <div>
+                            <div
+                                style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">
+                                Emergency
+                                Fund</div>
+                            <div style="font-family:var(--font-hud);font-size:12px;font-weight:700;color:var(--text);"
+                                id="savings-emerg">$0.00</div>
+                            <div style="font-size:10px;color:var(--text2);">Target reached: <span id="savings-emerg-pct"
+                                    style="color:var(--green);">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Chart -->
+            <div class="card">
+                <div class="card-header"><span class="card-title" style="color:var(--purple);">6-Month Cash Flow</span>
+                </div>
+                <div class="chart-wrap" id="personal-chart" style="padding:14px 16px;"></div>
+            </div>
+
+            <!-- Tracking Categories -->
+            <div class="card">
+                <div class="card-header"><span class="card-title" style="color:var(--purple);">Budget Categories</span>
+                </div>
+                <div id="personal-categories"></div>
+            </div>
+
+            <!-- T4 Tax Summary -->
+            <div class="card" id="t4-section">
+                <div class="card-header"><span class="card-title" style="color:var(--purple);" id="t4-name">T4 Tax
+                        Withholding</span></div>
+                <div class="ring-chart-wrap" style="padding-bottom:5px;">
+                    <div class="ring-svg" id="t4-donut" style="position:relative;"></div>
+                    <div class="ring-center" id="t4-donut-center"></div>
+                    <div class="ring-legend" style="padding-top:10px;">
+                        <div class="ring-legend-item">
+                            <div class="ring-dot" style="background:var(--cyan)"></div><span
+                                class="ring-legend-label">Net Pay</span>
+                        </div>
+                        <div class="ring-legend-item">
+                            <div class="ring-dot" style="background:var(--red)"></div><span
+                                class="ring-legend-label">Income
+                                Tax</span>
+                        </div>
+                        <div class="ring-legend-item">
+                            <div class="ring-dot" style="background:var(--amber)"></div><span
+                                class="ring-legend-label">CPP
+                                Contrib</span>
+                        </div>
+                        <div class="ring-legend-item">
+                            <div class="ring-dot" style="background:var(--purple)"></div><span
+                                class="ring-legend-label">EI
+                                Premium</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="t4-row total"><span class="t4-label">Gross Salary</span><span class="t4-val"
+                        id="t4-gross"></span>
+                </div>
+                <div class="t4-row"><span class="t4-label">Net Annual Pay</span><span class="t4-val text-green"
+                        id="t4-net-annual"></span></div>
+                <div class="t4-row"><span class="t4-label">Net Bi-Weekly Pay</span><span class="t4-val text-green"
+                        id="t4-net-biweekly"></span></div>
+                <div class="t4-row"><span class="t4-label">Est. Income Tax (Fed+Prov)</span><span
+                        class="t4-val text-red" id="t4-total-deductions"></span></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section-pad">
+                <div class="section-title" style="color:var(--purple);">Household Actions</div>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn income" onclick="Personal.openAdd('income')"><span class="btn-icon qi-icon"
+                        id="qi-p-income"></span>Add Income</button>
+                <button class="quick-btn expense" onclick="Personal.openAdd('expense')"><span class="btn-icon qi-icon"
+                        id="qi-p-expense"></span>Add Expense</button>
+                <button class="quick-btn invoice" onclick="App.navigate('settings')"
+                    style="color:var(--purple);border-color:rgba(192,122,255,.2);"><span class="btn-icon qi-icon"
+                        id="qi-p-budget"></span>Set Budget</button>
+            </div>
+
+            <!-- Recent -->
+            <div class="section-pad">
+                <div class="section-title" style="color:var(--purple);">Recent Household Items</div>
+            </div>
+            <div id="personal-recent-txns"
+                style="border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);"></div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 2: SALES ══════════ -->
+        <section id="sales-screen" class="screen">
+            <div class="section-pad" style="padding-bottom:4px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div class="section-title">Sales</div>
+                        <div class="section-sub">Invoices · Estimates · Customers</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-primary btn-sm" onclick="SalesModule.openNew('invoice')">+
+                            Invoice</button>
+                        <button class="btn btn-secondary btn-sm" onclick="SalesModule.openNew('estimate')">+
+                            Estimate</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Summary Bar -->
+            <div class="invoice-summary-bar">
+                <div class="inv-sum-item">
+                    <div class="inv-sum-val" id="inv-sum-outstanding">$0</div>
+                    <div class="inv-sum-label">Outstanding</div>
+                </div>
+                <div class="inv-sum-item">
+                    <div class="inv-sum-val" style="color:var(--red-500);" id="inv-sum-overdue">$0</div>
+                    <div class="inv-sum-label">Overdue</div>
+                </div>
+                <div class="inv-sum-item">
+                    <div class="inv-sum-val" style="color:var(--green-600);" id="inv-sum-paid">$0</div>
+                    <div class="inv-sum-label">Paid</div>
+                </div>
+            </div>
+            <!-- Tabs -->
+            <div class="screen-tabs">
+                <button class="screen-tab active" data-tab="invoices" onclick="SalesModule.switchTab('invoices')">📄
+                    Invoices</button>
+                <button class="screen-tab" data-tab="estimates" onclick="SalesModule.switchTab('estimates')">📝
+                    Estimates</button>
+                <button class="screen-tab" data-tab="customers" onclick="SalesModule.switchTab('customers')">
+                    👥 Customers
+                    <button class="btn btn-xs btn-primary" style="margin-left:6px;"
+                        onclick="event.stopPropagation();SalesModule.switchTab('customers');SalesModule.openNewCust();">+</button>
+                </button>
+            </div>
+            <!-- Tab panes -->
+            <div class="tab-pane active" id="sales-tab-invoices">
+                <div id="invoice-list"></div>
+            </div>
+            <div class="tab-pane" id="sales-tab-estimates">
+                <div id="estimate-list"></div>
+            </div>
+            <div class="tab-pane" id="sales-tab-customers">
+                <div id="customers-list"></div>
+            </div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 3: ACCOUNTING ══════════ -->
+        <section id="ledger-screen" class="screen">
+            <div class="section-pad" style="padding-bottom:4px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div class="section-title">Accounting</div>
+                        <div class="section-sub">Transactions · Hours · Accounts</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-success btn-sm" onclick="Accounting.openAddIncome()">+ Income</button>
+                        <button class="btn btn-primary btn-sm" onclick="Accounting.openAddExpense()">+ Expense</button>
+                    </div>
+                </div>
+            </div>
+            <div id="ledger-summary"></div>
+            <div class="screen-tabs">
+                <button class="screen-tab active" data-tab="transactions"
+                    onclick="Accounting.switchTab('transactions')">📋
+                    Transactions</button>
+                <button class="screen-tab" data-tab="hours" onclick="Accounting.switchTab('hours')">⏱️ Hours</button>
+                <button class="screen-tab" data-tab="accounts" onclick="Accounting.switchTab('accounts')">🗂
+                    Accounts</button>
+            </div>
+            <!-- Transactions pane -->
+            <div class="tab-pane active" id="acct-tab-transactions">
+                <div style="display:flex;gap:8px;padding:8px 16px;">
+                    <button class="btn btn-secondary btn-sm" onclick="Accounting.exportCSV()">⬇ CSV</button>
+                </div>
+                <div class="search-wrap">
+                    <div class="search-box"><span class="search-icon">🔍</span><input type="search" class="search-input"
+                            id="ledger-search" placeholder="Search transactions…"></div>
+                </div>
+                <div class="filter-chips">
+                    <button class="chip active" data-filter="all">All</button>
+                    <button class="chip" data-filter="income">Income</button>
+                    <button class="chip" data-filter="expense">Expenses</button>
+                    <button class="chip" data-filter="business">Business</button>
+                    <button class="chip" data-filter="personal">Personal</button>
+                </div>
+                <div id="txn-list"></div>
+            </div>
+            <!-- Hours pane -->
+            <div class="tab-pane" id="acct-tab-hours">
+                <div id="hours-summary"></div>
+                <div class="hours-form-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--gray-800);margin-bottom:12px;">Log Hours
+                        Worked</div>
+                    <div class="hours-form-grid">
+                        <div class="form-group"><label class="form-label">Date</label><input type="date"
+                                class="form-control" id="hours-date"></div>
+                        <div class="form-group"><label class="form-label">Hours</label><input type="number"
+                                class="form-control" id="hours-amount" placeholder="e.g. 4.5" step="0.25" min="0.25">
+                        </div>
+                        <div class="form-group"><label class="form-label">Rate ($/hr)</label>
+                            <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                    class="form-control" id="hours-rate" placeholder="25" step="1" min="1"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">Description</label><input type="text"
+                                class="form-control" id="hours-desc" placeholder="e.g. Tile job — Davis"></div>
+                    </div>
+                    <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="Accounting.logHours()">✓
+                        Log
+                        Hours</button>
+                </div>
+                <div style="padding:4px 16px;">
+                    <div class="section-title" style="font-size:13px;">Recent Logs</div>
+                </div>
+                <div id="hours-log-list"></div>
+            </div>
+            <!-- Accounts pane -->
+            <div class="tab-pane" id="acct-tab-accounts">
+                <div style="padding:8px 16px;font-size:12px;color:var(--gray-500);">Your Chart of Accounts — aligned
+                    with CRA
+                    T2125 categories.</div>
+                <div id="accounts-list"></div>
+            </div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 4: REPORTS ══════════ -->
+        <section id="reports-screen" class="screen">
+            <div class="section-pad" style="padding-bottom:4px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div class="section-title">Reports</div>
+                        <div class="section-sub">CRA-ready financial summaries</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <button class="month-nav-btn" id="rep-year-prev">‹</button>
+                        <span
+                            style="font-size:14px;font-weight:700;color:var(--gray-800);min-width:44px;text-align:center;"
+                            id="reports-year-label">2025</span>
+                        <button class="month-nav-btn" id="rep-year-next">›</button>
+                    </div>
+                </div>
+            </div>
+            <div class="screen-tabs">
+                <button class="screen-tab active" data-tab="pl" onclick="Reports.switchTab('pl')">📈 P&amp;L</button>
+                <button class="screen-tab" data-tab="gst" onclick="Reports.switchTab('gst')">🏛️ GST/HST</button>
+                <button class="screen-tab" data-tab="ar" onclick="Reports.switchTab('ar')">📬 Receivables</button>
+                <button class="screen-tab" data-tab="service" onclick="Reports.switchTab('service')">📊 By
+                    Service</button>
+            </div>
+            <div class="tab-pane active" id="rep-tab-pl">
+                <div id="pl-content"></div>
+            </div>
+            <div class="tab-pane" id="rep-tab-gst">
+                <div id="gst-content"></div>
+            </div>
+            <div class="tab-pane" id="rep-tab-ar">
+                <div id="ar-content"></div>
+            </div>
+            <div class="tab-pane" id="rep-tab-service">
+                <div id="service-content"></div>
+            </div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 5: EQUIPMENT ══════════ -->
+        <section id="tracker-screen" class="screen">
+            <div class="section-pad">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div class="section-title">Equipment</div>
+                        <div class="section-sub">Sinking fund: <strong id="sinking-fund-total">$0/mo</strong></div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="EquipmentScreen.openAdd()">+ Add</button>
+                </div>
+            </div>
+            <div id="equipment-list" style="padding:0 16px;"></div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ SCREEN 6: SETTINGS ══════════ -->
+        <section id="settings-screen" class="screen">
+            <div class="section-pad">
+                <div class="section-title">Settings</div>
+            </div>
+
+            <!-- Users & T4 -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;">
+                    <span class="card-title">👥 Users &amp; Profiles</span>
+                </div>
+                <div id="settings-users-list"></div>
+            </div>
+            <!-- Business Profile -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;"><span class="card-title">🏢 Business Profile</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="form-label">Business Name</label><input
+                            type="text" class="form-control" id="set-business-name" placeholder="Carpet &amp; Tile Ops">
+                    </div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">Owner Name</label><input
+                            type="text" class="form-control" id="set-owner-name" placeholder="John Smith"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-control"
+                        id="set-address" placeholder="123 Main Street"></div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="form-label">City</label><input type="text"
+                            class="form-control" id="set-city" placeholder="Vancouver"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">Email</label><input type="email"
+                            class="form-control" id="set-email" placeholder="you@email.com"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="form-label">Phone</label><input type="tel"
+                            class="form-control" id="set-phone" placeholder="604-555-0100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">GST/HST #
+                            (optional)</label><input type="text" class="form-control" id="set-gst-number"
+                            placeholder="12345 6789 RT0001"></div>
+                </div>
+            </div>
+            <!-- Tax Province -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;"><span class="card-title">🍁 Province &amp; Tax</span>
+                </div>
+                <div class="form-group"><label class="form-label">Province (auto-sets GST/HST rate)</label><select
+                        class="form-control" id="set-province"></select></div>
+            </div>
+            <!-- Invoicing Defaults -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;"><span class="card-title">📄 Invoice Defaults</span>
+                </div>
+                <div class="form-group"><label class="form-label">Payment Terms (days)</label><input type="number"
+                        class="form-control" id="set-payment-terms" min="0" max="365" placeholder="30"></div>
+            </div>
+            <!-- Service Splits -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;"><span class="card-title">✂️ Service
+                        Splits</span><span style="font-size:11px;color:var(--text-muted);">% goes to you</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group" style="margin:0;"><label class="form-label">🧹 Carpet (%)</label><input
+                            type="number" class="form-control" id="set-split-carpet" min="1" max="100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">🪣 Tile (%)</label><input
+                            type="number" class="form-control" id="set-split-tile" min="1" max="100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">🛋️ Upholstery (%)</label><input
+                            type="number" class="form-control" id="set-split-upholstery" min="1" max="100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">🪤 Area Rug (%)</label><input
+                            type="number" class="form-control" id="set-split-rug" min="1" max="100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">🏢 Commercial (%)</label><input
+                            type="number" class="form-control" id="set-split-commercial" min="1" max="100"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">⏱️ Hourly Rate ($/hr)</label>
+                        <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                class="form-control" id="set-hourly-rate" min="1"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Revenue Goals -->
+            <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px;"><span class="card-title">🎯 Revenue Goals</span>
+                </div>
+                <div class="form-group"><label class="form-label">Annual Revenue Goal</label>
+                    <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                            class="form-control" id="set-annual-goal" placeholder="120000"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Cash Reserve Target</label>
+                    <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                            class="form-control" id="set-reserve-goal" placeholder="10000"></div>
+                </div>
+            </div>
+            <div style="padding:0 16px 12px;"><button class="btn btn-primary btn-full"
+                    onclick="SettingsScreen.save()">💾 Save
+                    Settings</button></div>
+
+            <!-- Budget Goals -->
+            <div class="section-pad">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div class="section-title" style="font-size:15px;">Budget Goals</div>
+                        <div class="section-sub">Monthly spending limits</div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="SettingsScreen.openAddGoal()">+ Goal</button>
+                </div>
+            </div>
+            <div style="padding:0 16px;" id="goals-list"></div>
+
+            <!-- Data -->
+            <div class="settings-group">
+                <div class="settings-label">Data Management</div>
+                <div class="settings-item" onclick="SettingsScreen.exportAllData()"><span
+                        class="settings-item-icon">📦</span>
+                    <div class="settings-item-body">
+                        <div class="settings-item-title">Export Backup (JSON)</div>
+                        <div class="settings-item-desc">Download all your data</div>
+                    </div><span class="settings-item-arrow">›</span>
+                </div>
+                <div class="settings-item" onclick="SettingsScreen.importData()"><span
+                        class="settings-item-icon">📥</span>
+                    <div class="settings-item-body">
+                        <div class="settings-item-title">Import Backup</div>
+                        <div class="settings-item-desc">Restore from JSON file</div>
+                    </div><span class="settings-item-arrow">›</span>
+                </div>
+                <div class="settings-item" id="btn-clear-data" onclick="SettingsScreen.clearAllData()"
+                    style="border-left:3px solid var(--red-400);"><span class="settings-item-icon">🗑️</span>
+                    <div class="settings-item-body">
+                        <div class="settings-item-title" style="color:var(--red-500);">Clear All Data</div>
+                        <div class="settings-item-desc">Tap twice to confirm</div>
+                    </div><span class="settings-item-arrow">›</span>
+                </div>
+            </div>
+
+            <!-- Install guide -->
+            <div class="card"
+                style="background:linear-gradient(135deg,var(--blue-50),#fff);border:1.5px solid var(--blue-200);padding:14px 16px;margin-bottom:12px;">
+                <div class="card-header" style="padding:0 0 10px;"><span class="card-title">📲 Install This App</span>
+                </div>
+                <div style="font-size:13px;color:var(--gray-600);line-height:1.8;">
+                    <div><strong>🤖 Android:</strong> Chrome ⋮ → Add to Home Screen</div>
+                    <div><strong>🍎 iPhone:</strong> Safari → Share 📤 → Add to Home Screen</div>
+                    <div><strong>💻 Windows/Mac:</strong> Chrome/Edge → ⊕ in address bar → Install</div>
+                    <div
+                        style="margin-top:8px;padding:8px;background:var(--blue-100);border-radius:6px;font-size:11px;color:var(--blue-700);">
+                        💡 Host free on <strong>GitHub Pages</strong> or <strong>Netlify</strong> to get an HTTPS URL
+                        for
+                        installation.</div>
+                </div>
+            </div>
+            <div style="text-align:center;padding:16px;color:var(--gray-400);font-size:11px;">Carpet &amp; Tile Ops
+                Canada
+                v4.0 · Wave-Inspired PWA<br>Built for Douglas Da Silva 🍁</div>
+            <div class="spacer-16"></div>
+        </section>
+
+        <!-- ══════════ BOTTOM NAV ══════════ -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" id="nav-dashboard" onclick="App.navigate('dashboard')"><span
+                    class="nav-icon" id="ni-dash"></span><span class="nav-label">Dash</span></button>
+            <button class="nav-item" id="nav-personal" onclick="App.navigate('personal')"><span class="nav-icon"
+                    id="ni-pers"></span><span class="nav-label">Personal</span></button>
+            <button class="nav-item" id="nav-sales" onclick="App.navigate('sales')"><span class="nav-icon"
+                    id="ni-sale"></span><span class="nav-label">Sales</span></button>
+            <button class="nav-item" id="nav-ledger" onclick="App.navigate('ledger')"><span class="nav-icon"
+                    id="ni-acct"></span><span class="nav-label">Acct</span></button>
+            <button class="nav-item" id="nav-reports" onclick="App.navigate('reports')"><span class="nav-icon"
+                    id="ni-rept"></span><span class="nav-label">Report</span></button>
+            <button class="nav-item" id="nav-tracker" onclick="App.navigate('tracker')"><span class="nav-icon"
+                    id="ni-eqpt"></span><span class="nav-label">Equip</span></button>
+            <button class="nav-item" id="nav-settings" onclick="App.navigate('settings')"><span class="nav-icon"
+                    id="ni-sett"></span><span class="nav-label">Settings</span></button>
+        </nav>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ══════════ MODAL: Transaction ══════════ -->
+    <div class="modal-overlay" id="txn-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="txn-modal-title">Add Transaction</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('txn-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="txn-form" onsubmit="event.preventDefault();">
+                    <input type="hidden" id="txn-type" value="income">
+                    <input type="hidden" id="txn-acct-type" value="business">
+                    <div class="form-group">
+                        <label class="form-label">Account <span style="font-size:10px;color:var(--green-600);">✓
+                                Auto-set from
+                                category</span></label>
+                        <div class="seg-control">
+                            <button type="button" class="seg-btn active" data-val="business">💼 Business</button>
+                            <button type="button" class="seg-btn" data-val="personal">👤 Personal</button>
+                        </div>
+                    </div>
+                    <div class="form-group" id="service-type-wrap">
+                        <label class="form-label">Service Type</label>
+                        <select class="form-control" id="txn-service-type"></select>
+                    </div>
+                    <div id="split-preview" style="display:none;margin-bottom:12px;"></div>
+                    <div class="form-group">
+                        <label class="form-label">Amount (CAD)</label>
+                        <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                class="form-control" id="txn-amount" placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="txn-description"
+                            placeholder="e.g. Carpet cleaning — Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="txn-category"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="txn-date">
+                    </div>
+                    <div class="toggle-row" id="gst-toggle-row">
+                        <span class="toggle-label">GST/HST collected from client</span>
+                        <label class="toggle-switch"><input type="checkbox" id="txn-gst"><span
+                                class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row" id="itc-toggle-row" style="display:none;">
+                        <span class="toggle-label">GST/HST paid on this expense <span
+                                style="font-size:10px;color:var(--green-600);">(ITC claimable)</span></span>
+                        <label class="toggle-switch"><input type="checkbox" id="txn-gst-paid"><span
+                                class="toggle-slider"></span></label>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="txn-notes" placeholder="Optional…"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Receipt Photo (Camera)</label>
+                        <label for="receipt-file" class="camera-btn"
+                            style="display:inline-flex;align-items:center;cursor:pointer;"><span id="icon-camera-txn"
+                                style="margin-right:8px;">📸</span> Use Camera</label>
+                        <input type="file" id="receipt-file" accept="image/*" capture="environment"
+                            style="display:none;" onchange="Accounting.handleReceiptUpload(this)">
+                        <div id="receipt-preview-wrap" style="margin-top:10px;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('txn-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="Accounting.saveTxn()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Personal Transaction ══════════ -->
+    <div class="modal-overlay" id="modal-personal-txn">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" style="color:var(--purple);" id="personal-txn-modal-title">Add Household
+                    Expense</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('modal-personal-txn').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="personal-txn-form" onsubmit="event.preventDefault();">
+                    <input type="hidden" id="personal-txn-type" value="expense">
+                    <input type="hidden" id="personal-txn-userid" value="">
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Amount (CAD)</label>
+                        <div class="input-prefix-wrap"><span class="input-prefix"
+                                style="color:var(--purple);">$</span><input type="number" class="form-control"
+                                id="personal-txn-amount" placeholder="0.00" step="0.01" min="0.01"
+                                style="border-color:rgba(192,122,255,.2);" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Household Category</label>
+                        <select class="form-control" id="personal-txn-category"
+                            style="border-color:rgba(192,122,255,.2);"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Description</label>
+                        <input type="text" class="form-control" id="personal-txn-desc" placeholder="e.g. Save-On-Foods"
+                            style="border-color:rgba(192,122,255,.2);" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Date</label>
+                        <input type="date" class="form-control" id="personal-txn-date"
+                            style="border-color:rgba(192,122,255,.2);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Capture Receipt (Camera)</label>
+                        <label for="personal-receipt-file" class="camera-btn"
+                            style="display:inline-flex;align-items:center;cursor:pointer;color:var(--purple);border-color:rgba(192,122,255,.2);"><span
+                                id="icon-camera-p" style="margin-right:8px;">📸</span> Use Camera</label>
+                        <input type="file" id="personal-receipt-file" accept="image/*" capture="environment"
+                            style="display:none;" onchange="Personal.handleReceipt(this)">
+                        <div id="personal-txn-receipt-preview" style="margin-top:10px;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('modal-personal-txn').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary"
+                    style="background:linear-gradient(135deg,#8822cc,var(--purple));box-shadow:0 0 12px rgba(192,122,255,.2);"
+                    onclick="Personal.savePersonalTxn()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Invoice Create/Edit ══════════ -->
+    <div class="modal-overlay" id="inv-modal">
+        <div class="modal" style="max-height:96vh;">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="inv-modal-title">New Invoice</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('inv-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-type" value="invoice">
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="form-label">Customer</label><select
+                            class="form-control" id="inv-customer">
+                            <option value="">— Select —</option>
+                        </select></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">Invoice #</label><input
+                            type="text" class="form-control" id="inv-number" readonly
+                            style="background:var(--gray-50);color:var(--gray-400);">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="form-label">Date</label><input type="date"
+                            class="form-control" id="inv-date"></div>
+                    <div class="form-group" style="margin:0;"><label class="form-label">Due Date</label><input
+                            type="date" class="form-control" id="inv-due"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Line Items</label>
+                    <div id="inv-line-items"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;">
+                    <div>
+                        <div><span id="inv-disc-display" style="color:var(--red-500);font-size:12px;"></span></div>
+                        <div style="font-weight:600;" id="inv-gst-display"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div>Subtotal: <strong id="inv-sub-display">$0.00</strong></div>
+                        <div style="font-size:16px;font-weight:800;color:var(--blue-700);">Total: <strong
+                                id="inv-total-display">$0.00</strong></div>
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Discount (%)</label><input type="number"
+                        class="form-control" id="inv-discount" min="0" max="100" step="1" placeholder="0"></div>
+                <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control"
+                        id="inv-notes" placeholder="Thank you for your business!"></textarea></div>
+                <div class="form-group"><label class="form-label">Terms</label><textarea class="form-control"
+                        id="inv-terms" placeholder="Payment due within 30 days." style="min-height:60px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('inv-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="SalesModule.saveInvoice()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Invoice View ══════════ -->
+    <div class="modal-overlay" id="inv-view-modal">
+        <div class="modal" style="max-height:96vh;">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title">Invoice Details</span>
+                <button class="modal-close" onclick="SalesModule.closeViewModal()">✕</button>
+            </div>
+            <div class="modal-body" id="inv-view-body"></div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Customer ══════════ -->
+    <div class="modal-overlay" id="cust-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="cust-modal-title">New Customer</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('cust-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="cust-form" onsubmit="event.preventDefault();">
+                    <div class="form-row">
+                        <div class="form-group" style="margin:0;"><label class="form-label">Full Name *</label><input
+                                type="text" class="form-control" id="cust-name" placeholder="Jane Smith" required></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Phone</label><input
+                                type="tel" class="form-control" id="cust-phone" placeholder="604-555-0100"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Email</label><input type="email"
+                            class="form-control" id="cust-email" placeholder="jane@email.com"></div>
+                    <div class="form-group"><label class="form-label">Street Address</label><input type="text"
+                            class="form-control" id="cust-address" placeholder="123 Oak Street"></div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin:0;"><label class="form-label">City</label><input
+                                type="text" class="form-control" id="cust-city" placeholder="Vancouver"></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Province</label><select
+                                class="form-control" id="cust-province"></select></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Postal Code</label><input type="text"
+                            class="form-control" id="cust-postal" placeholder="V5K 1A1"></div>
+                    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control"
+                            id="cust-notes" placeholder="VIP customer, prefers mornings…"></textarea></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('cust-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="SalesModule.saveCust()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Equipment ══════════ -->
+    <div class="modal-overlay" id="equip-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="equip-modal-title">Add Equipment</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('equip-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="equip-form" onsubmit="event.preventDefault();">
+                    <div class="form-group"><label class="form-label">Equipment Name *</label><input type="text"
+                            class="form-control" id="equip-name" placeholder="e.g. Truck Mount" required></div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin:0;"><label class="form-label">Icon (emoji)</label><input
+                                type="text" class="form-control" id="equip-icon" placeholder="🔧" maxlength="4"></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Status</label><select
+                                class="form-control" id="equip-status-sel">
+                                <option value="ok">✓ OK</option>
+                                <option value="due">⚠ Due</option>
+                                <option value="overdue">🔴 Overdue</option>
+                            </select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin:0;"><label class="form-label">Last Service</label><input
+                                type="date" class="form-control" id="equip-last-service"></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Next Service</label><input
+                                type="date" class="form-control" id="equip-next-service"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Monthly Sinking Fund</label>
+                        <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                class="form-control" id="equip-monthly-fund" placeholder="100" min="0" step="5"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control"
+                            id="equip-notes" placeholder="Maintenance notes…"></textarea></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('equip-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="EquipmentScreen.save()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Edit User ══════════ -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="user-modal-title">Edit User Profile</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('user-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form" onsubmit="event.preventDefault();">
+                    <input type="hidden" id="user-edit-id">
+                    <div class="form-row">
+                        <div class="form-group" style="margin:0;"><label class="form-label">Display Name</label><input
+                                type="text" class="form-control" id="user-edit-name" required></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Full Name</label><input
+                                type="text" class="form-control" id="user-edit-fullname"></div>
+                    </div>
+                    <div id="user-edit-t4-section"
+                        style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border2);">
+                        <div
+                            style="font-family:var(--font-hud);font-size:11px;color:var(--cyan);margin-bottom:12px;letter-spacing:1px;">
+                            T4 TAX PARAMETERS</div>
+                        <div class="form-group"><label class="form-label">Gross Annual Salary</label>
+                            <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                    class="form-control" id="user-t4-gross" step="1000" min="0"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="margin:0;"><label class="form-label">Province</label><select
+                                    class="form-control" id="user-t4-province"></select></div>
+                            <div class="form-group" style="margin:0;"><label class="form-label">Pay
+                                    Periods</label><select class="form-control" id="user-t4-periods">
+                                    <option value="12">Monthly (12)</option>
+                                    <option value="24">Semi-Monthly (24)</option>
+                                    <option value="26">Bi-Weekly (26)</option>
+                                    <option value="52">Weekly (52)</option>
+                                </select></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('user-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="SettingsScreen.saveUser()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MODAL: Budget Goal ══════════ -->
+    <div class="modal-overlay" id="goal-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <span class="modal-title" id="goal-modal-title">Add Budget Goal</span>
+                <button class="modal-close"
+                    onclick="document.getElementById('goal-modal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="goal-form" onsubmit="event.preventDefault();">
+                    <div class="form-group"><label class="form-label">Category</label><select class="form-control"
+                            id="goal-category"></select></div>
+                    <div class="form-group"><label class="form-label">Spending Limit</label>
+                        <div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="number"
+                                class="form-control" id="goal-limit" placeholder="500" min="1" step="10" required></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Period</label><select class="form-control"
+                            id="goal-period">
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('goal-modal').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" onclick="SettingsScreen.saveGoal()">💾 Save Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ SCRIPTS ══════════ -->
+    <script src="js/data.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/invoices.js"></script>
+    <script src="js/accounting.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/tracker.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/personal.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => { }));
+        }
+        // PWA Install
+        let _dp;
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault(); _dp = e; document.getElementById('install-banner').classList.add('show');
+        });
+        document.getElementById('install-btn')?.addEventListener('click', async () => {
+            if (_dp) { _dp.prompt(); await _dp.userChoice; _dp = null; document.getElementById('install-banner').classList.remove('show'); }
+        });
+        document.getElementById('install-dismiss')?.addEventListener('click', () =>
+            document.getElementById('install-banner').classList.remove('show')
+        );
+        window.addEventListener('DOMContentLoaded', () => {
+            applyNavIcons();
+            applyHeaderIcons();
+            const e = id => document.getElementById(id);
+            // Inject quick action icons
+            if (e('qi-invoice')) e('qi-invoice').innerHTML = ICONS.invoice;
+            if (e('qi-income')) e('qi-income').innerHTML = ICONS.addIncome;
+            if (e('qi-expense')) e('qi-expense').innerHTML = ICONS.addExpense;
+            if (e('qi-hours')) e('qi-hours').innerHTML = ICONS.hours;
+            if (e('qi-p-income')) e('qi-p-income').innerHTML = ICONS.addIncome;
+            if (e('qi-p-expense')) e('qi-p-expense').innerHTML = ICONS.addExpense;
+            if (e('qi-p-budget')) e('qi-p-budget').innerHTML = ICONS.settings;
+            if (e('icon-camera-p')) e('icon-camera-p').innerHTML = ICONS.camera || '📷';
+            if (e('icon-camera-txn')) e('icon-camera-txn').innerHTML = ICONS.camera || '📷';
+            if (e('hbtn-invoice')) e('hbtn-invoice').innerHTML = ICONS.invoice;
+
+            const pSel = document.getElementById('cust-province');
+            if (pSel && typeof DB !== 'undefined') {
+                pSel.innerHTML = DB.PROVINCES.map(p => `<option value="${p.code}">${p.name}</option>`).join('');
+            }
+        });
+    </script>
+</body>
+
+</html>
